@@ -2,16 +2,14 @@
 
 Automated collateral claim bot for the PAWNABLE P2P lending platform.
 
-Periodically scans for expired loans and calls `claimCollateral()` on-chain to transfer collateral to lenders.
+Scans on-chain loans directly via `nextLoanId()` + `getLoan()`, and calls `claimCollateral()` for expired ones.
 
 ## How It Works
 
-1. Polls the backend API every 30s for `ONGOING` loans
-2. Filters loans where `dueTimestamp < now`
-3. Verifies on-chain status via `getLoan()` (double-check)
-4. Sends `claimCollateral(loanId)` transaction
-5. Updates backend loan status to `CLAIMED` on success
-6. Logs and continues on failure — no special permissions required
+1. Reads all loans from the smart contract (`nextLoanId` + `getLoan`)
+2. Filters loans where `status == ONGOING` and `dueTimestamp < now`
+3. Sends `claimCollateral(loanId)` transaction
+4. Logs and continues on failure — no special permissions required, no backend dependency
 
 ## Setup
 
@@ -29,7 +27,6 @@ pnpm install
 | `PRIVATE_KEY` | Yes | Bot wallet private key | - |
 | `RPC_URL` | Yes | Base Sepolia RPC endpoint | - |
 | `CONTRACT_ADDRESS` | Yes | PawnableLoan contract address | - |
-| `BACKEND_URL` | Yes | Backend API base URL | - |
 | `SCAN_INTERVAL_MS` | No | Scan interval in milliseconds | `30000` |
 
 ## Usage
@@ -47,8 +44,7 @@ src/
 ├── index.ts        # Entrypoint
 ├── config.ts       # Environment config
 ├── bot.ts          # Scan loop
-├── api.ts          # Backend API client
-├── contract.ts     # Smart contract interaction
+├── contract.ts     # On-chain reads + claimCollateral
 └── abi/
     └── PawnableLoan.json
 ```
